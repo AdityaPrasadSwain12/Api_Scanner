@@ -1,0 +1,26 @@
+{
+  "bomFormat": "CycloneDX",
+  "specVersion": "1.6",
+  "serialNumber": "urn:uuid:5706af47-5d48-48c1-a660-3a57446c2fc7",
+  "version": 1,
+  "metadata": {
+    "timestamp": "2026-09-13T00:00:00Z",
+    "component": {"type": "application", "name": "enterprise-api-scanner", "version": "0.1.0"},
+    "properties": [{"name": "scope", "value": "Direct application and scanner-tool components; generate per-image SBOMs for transitive OS packages."}]
+  },
+  "components": [
+    {"type":"library","name":"fastapi","version":"0.116.1","purl":"pkg:pypi/fastapi@0.116.1","licenses":[{"license":{"id":"MIT"}}]},
+    {"type":"library","name":"celery","version":"5.5.3","purl":"pkg:pypi/celery@5.5.3","licenses":[{"license":{"id":"BSD-3-Clause"}}]},
+    {"type":"library","name":"sqlalchemy","version":"2.0.43","purl":"pkg:pypi/sqlalchemy@2.0.43","licenses":[{"license":{"id":"MIT"}}]},
+    {"type":"library","name":"httpx","version":"0.28.1","purl":"pkg:pypi/httpx@0.28.1","licenses":[{"license":{"id":"BSD-3-Clause"}}]},
+    {"type":"library","name":"cryptography","version":"46.0.1","purl":"pkg:pypi/cryptography@46.0.1","licenses":[{"expression":"Apache-2.0 OR BSD-3-Clause"}]},
+    {"type":"application","name":"OWASP ZAP","version":"2.17.0","purl":"pkg:github/zaproxy/zaproxy@v2.17.0","licenses":[{"license":{"id":"Apache-2.0"}}]},
+    {"type":"application","name":"Nuclei","version":"3.11.0","purl":"pkg:github/projectdiscovery/nuclei@v3.11.0","licenses":[{"license":{"id":"MIT"}}]},
+    {"type":"data","name":"nuclei-templates","version":"10.4.7","purl":"pkg:github/projectdiscovery/nuclei-templates@v10.4.7","licenses":[{"license":{"id":"MIT"}}]},
+    {"type":"application","name":"Wfuzz","version":"3.1.1","purl":"pkg:github/xmendez/wfuzz@v3.1.1","licenses":[{"license":{"id":"GPL-2.0-only"}}]},
+    {"type":"application","name":"WuppieFuzz","version":"1.7.1","purl":"pkg:github/TNO-S3/WuppieFuzz@v1.7.1","licenses":[{"license":{"id":"Apache-2.0"}}]},
+    {"type":"application","name":"PostgreSQL","version":"17.6","purl":"pkg:docker/postgres@17.6-alpine","licenses":[{"license":{"name":"PostgreSQL"}}]},
+    {"type":"application","name":"Valkey","version":"9.1.1","purl":"pkg:docker/valkey/valkey@9.1.1-alpine","licenses":[{"license":{"id":"BSD-3-Clause"}}]}
+  ]
+}
+

@@ -1,0 +1,76 @@
+{
+  "report_metadata": {
+    "format_version": "2.0",
+    "report_type": "technical",
+    "generated_at": "2026-09-13T00:00:00Z",
+    "disclaimer": "Automated testing does not guarantee complete vulnerability detection."
+  },
+  "scan": {
+    "id": "example-scan",
+    "target": "https://api.example.com",
+    "profile": "STANDARD",
+    "status": "COMPLETED",
+    "started_at": "2026-09-12T23:59:17.900000Z",
+    "finished_at": "2026-09-13T00:00:00Z",
+    "duration_seconds": 42.1
+  },
+  "summary": {
+    "endpoint_count": 3,
+    "finding_count": 1,
+    "severity_distribution": {"MEDIUM": 1},
+    "maximum_risk_score": 5.5
+  },
+  "coverage": {
+    "endpoints": {
+      "total": 3,
+      "defined": 3,
+      "discovered": 0,
+      "tested": 2,
+      "skipped": 1,
+      "not_tested": 0,
+      "percent_tested": 66.7,
+      "skip_reasons": {"missing example": 1}
+    },
+    "authentication": {"required_endpoints": 1, "tested": true},
+    "authorization": {"identities_configured": 0, "tested": false},
+    "fuzzing": {"tested": true},
+    "engines": {
+      "custom": {"status": "COMPLETED", "request_count": 3, "reason": null},
+      "zap": {"status": "COMPLETED", "request_count": 12, "reason": null}
+    },
+    "specification": {"available": true, "operations_analyzed": 3},
+    "interpretation": "An untested endpoint is not evidence that the endpoint is not vulnerable."
+  },
+  "findings": [
+    {
+      "finding_id": "example-finding",
+      "title": "Operation accessible without declared authentication",
+      "finding_type": "RUNTIME",
+      "description": "The protected operation returned the same data without credentials.",
+      "category": "missing-authentication",
+      "owasp_api": "API2:2023 Broken Authentication",
+      "cwe": "CWE-306",
+      "severity": "MEDIUM",
+      "confidence": "HIGH",
+      "risk_score": 5.5,
+      "endpoint": "/private",
+      "method": "GET",
+      "parameter": null,
+      "source_engines": ["custom", "zap"],
+      "impact": "Unauthenticated callers may retrieve restricted data.",
+      "remediation": "Enforce authentication and authorization server-side for this operation.",
+      "references": ["https://owasp.org/API-Security/"],
+      "status": "OPEN",
+      "evidence": [
+        {
+          "engine": "custom",
+          "request": {"method": "GET", "url": "https://api.example.com/private"},
+          "response": {"status_code": 200, "body": "Restricted account data returned."},
+          "detail": "The response was equivalent with and without authentication."
+        }
+      ],
+      "first_seen_at": "2026-09-13T00:00:00Z",
+      "last_seen_at": "2026-09-13T00:00:00Z"
+    }
+  ]
+}

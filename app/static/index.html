@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Sentinel API Scanner</title>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <aside>
+    <div class="brand"><span>&#9670;</span> Sentinel</div>
+    <nav>
+      <button data-view="dashboard" class="active">Dashboard</button>
+      <button data-view="new">New Scan</button>
+      <button data-view="history">Scan History</button>
+    </nav>
+    <small>Authorized testing only</small>
+  </aside>
+
+  <main>
+    <header>
+      <div><p class="eyebrow">API SECURITY</p><h1 id="title">Dashboard</h1></div>
+      <span class="platform-state">Scanner ready</span>
+    </header>
+    <div id="notice" class="notice hidden" role="status"></div>
+
+    <section id="dashboard" class="view active">
+      <div class="metrics">
+        <article><label>Total scans</label><strong id="totalScans">0</strong></article>
+        <article><label>Active</label><strong id="activeScans">0</strong></article>
+        <article><label>Findings</label><strong id="totalFindings">0</strong></article>
+        <article><label>Average coverage</label><strong id="coverage">&mdash;</strong></article>
+      </div>
+      <div class="panel">
+        <div class="panel-head"><div><h2>Recent scans</h2><p class="muted">Select a scan to see findings and reports.</p></div><button data-view="new">New API scan</button></div>
+        <div class="table-wrap"><table><thead><tr><th>Target</th><th>Status</th><th>Progress</th><th>Findings</th></tr></thead><tbody id="recentRows"></tbody></table></div>
+      </div>
+    </section>
+
+    <section id="new" class="view">
+      <div class="panel form-panel">
+        <h2>Scan an API</h2>
+        <p class="muted">Provide the API's hosted base URL and its OpenAPI/Swagger document. Sentinel verifies the document and target scope before scanning.</p>
+        <form id="scanForm">
+          <label>Target API URL
+            <input name="target_url" type="url" placeholder="https://api.your-company.com" required>
+            <span class="help">The base address where the documented API is hosted.</span>
+          </label>
+
+          <div class="document-box">
+            <label>API document format
+              <select id="documentSource" name="document_source">
+                <option value="file" selected>Upload OpenAPI/Swagger file</option>
+                <option value="url">Use OpenAPI/Swagger URL</option>
+                <option value="paste">Paste JSON or YAML</option>
+              </select>
+            </label>
+
+            <label class="document-field" data-source="file">OpenAPI/Swagger file
+              <input id="specFile" type="file" accept=".json,.yaml,.yml,application/json,application/yaml,text/yaml" required>
+              <span class="help">Accepted: OpenAPI 3.0/3.1 or Swagger 2.0 in JSON, YAML, or YML.</span>
+            </label>
+
+            <label class="document-field hidden" data-source="url">OpenAPI/Swagger document URL
+              <input name="specification_url" type="url" placeholder="https://api.your-company.com/openapi.json">
+            </label>
+
+            <label class="document-field hidden" data-source="paste">OpenAPI/Swagger JSON or YAML
+              <textarea name="specification" rows="10" placeholder="openapi: 3.1.0&#10;info:&#10;  title: My API&#10;  version: '1.0'&#10;paths: ..."></textarea>
+            </label>
+          </div>
+
+          <div class="verification-note">
+            <strong>Before scanning, Sentinel checks:</strong>
+            <span>the document format, its API paths, the target hostname, and that document server URLs stay inside the authorized target scope.</span>
+          </div>
+
+          <label class="check"><input name="authorized" type="checkbox" required> I confirm that I own this API or have explicit permission to test it.</label>
+          <button id="startButton" type="submit">Verify and start scan</button>
+          <p id="submitStatus" class="muted hidden"></p>
+        </form>
+      </div>
+    </section>
+
+    <section id="history" class="view">
+      <div class="panel">
+        <h2>Scan history</h2>
+        <div class="table-wrap"><table><thead><tr><th>Target</th><th>Created</th><th>Status</th><th>Coverage</th></tr></thead><tbody id="historyRows"></tbody></table></div>
+      </div>
+    </section>
+
+    <section id="details" class="view">
+      <button id="back" class="quiet">&larr; Back to dashboard</button>
+      <div id="scanDetail"></div>
+    </section>
+  </main>
+  <script src="/app.js"></script>
+</body>
+</html>

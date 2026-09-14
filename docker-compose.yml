@@ -1,0 +1,279 @@
+name: enterprise-api-scanner
+
+x-app-environment: &app-environment
+  ENVIRONMENT: ${ENVIRONMENT:-development}
+  DATABASE_URL: postgresql+psycopg://scanner:${POSTGRES_PASSWORD:-scanner-dev-password}@postgres:5432/api_scanner
+  REDIS_URL: redis://redis:6379/0
+  SCANNER_API_KEY: ${SCANNER_API_KEY:-local-development-key}
+  SECRET_ENCRYPTION_KEY: ${SECRET_ENCRYPTION_KEY:-NQ4M5lY8yl5wE9bG6vRCcQ5Rk4j1g5HVFFOS5iQlJ0k=}
+  ENGINE_RUNNER_TOKEN: ${ENGINE_RUNNER_TOKEN:-local-engine-runner-token}
+  ZAP_URL: http://zap:8080
+  ZAP_API_KEY: ${ZAP_API_KEY:-local-zap-key}
+  ZAP_SHARED_DIRECTORY: /engine-data
+  NUCLEI_RUNNER_URL: http://nuclei:8091
+  WFUZZ_RUNNER_URL: http://wfuzz:8092
+  WUPPIEFUZZ_RUNNER_URL: http://wuppiefuzz:8093
+  OAST_CALLBACK_BASE_URL: ${OAST_CALLBACK_BASE_URL:-http://oast:8094/c}
+  OAST_POLL_BASE_URL: http://oast:8094
+  OAST_API_KEY: ${OAST_API_KEY:-local-oast-key}
+  ALLOWED_TARGETS: ${ALLOWED_TARGETS:-vulnerable-api,host.docker.internal}
+  ALLOW_PRIVATE_TARGETS: ${ALLOW_PRIVATE_TARGETS:-true}
+  TARGET_SCOPE_MODE: ${TARGET_SCOPE_MODE:-deployment_allowlist}
+  DASHBOARD_AUTH_MODE: ${DASHBOARD_AUTH_MODE:-disabled}
+  SCAN_TIMEOUT: ${SCAN_TIMEOUT:-1800}
+  MAX_CONCURRENCY: ${MAX_CONCURRENCY:-10}
+  MAX_REQUESTS: ${MAX_REQUESTS:-2000}
+  DEFAULT_RATE_LIMIT: ${DEFAULT_RATE_LIMIT:-10}
+  MAX_SPEC_SIZE: ${MAX_SPEC_SIZE:-5242880}
+  MAX_RESPONSE_SIZE: ${MAX_RESPONSE_SIZE:-2097152}
+  REPORT_DIRECTORY: /data/reports
+
+x-runner-environment: &runner-environment
+  ENGINE_RUNNER_TOKEN: ${ENGINE_RUNNER_TOKEN:-local-engine-runner-token}
+  ALLOW_PRIVATE_TARGETS: ${ALLOW_PRIVATE_TARGETS:-true}
+  ENGINE_MAX_OUTPUT: 5242880
+
+services:
+  postgres:
+    image: postgres:17.6-alpine
+    environment:
+      POSTGRES_DB: api_scanner
+      POSTGRES_USER: scanner
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-scanner-dev-password}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U scanner -d api_scanner"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    networks: [data]
+    restart: unless-stopped
+    security_opt: ["no-new-privileges:true"]
+
+  redis:
+    image: valkey/valkey:9.1.1-alpine
+    command: ["valkey-server", "--appendonly", "yes", "--maxmemory", "256mb", "--maxmemory-policy", "noeviction"]
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "valkey-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    networks: [data]
+    restart: unless-stopped
+    security_opt: ["no-new-privileges:true"]
+
+  migrate:
+    build:
+      context: .
+      dockerfile: docker/app.Dockerfile
+    command: ["alembic", "upgrade", "head"]
+    environment: *app-environment
+    depends_on:
+      postgres: {condition: service_healthy}
+    networks: [data]
+    restart: "no"
+
+  api:
+    build:
+      context: .
+      dockerfile: docker/app.Dockerfile
+    environment: *app-environment
+    ports:
+      - "8000:8000"
+    volumes:
+      - reports:/data/reports
+    depends_on:
+      migrate: {condition: service_completed_successfully}
+      redis: {condition: service_healthy}
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health', timeout=2)"]
+      interval: 10s
+      timeout: 3s
+      retries: 10
+    networks: [frontend, data, scanner]
+    restart: unless-stopped
+    security_opt: ["no-new-privileges:true"]
+    read_only: true
+    tmpfs: [/tmp]
+
+  worker:
+    build:
+      context: .
+      dockerfile: docker/app.Dockerfile
+    command: ["celery", "-A", "app.workers.celery_app:celery_app", "worker", "--loglevel=INFO", "--concurrency=1"]
+    environment: *app-environment
+    volumes:
+      - reports:/data/reports
+      - engine-data:/engine-data
+    depends_on:
+      migrate: {condition: service_completed_successfully}
+      redis: {condition: service_healthy}
+      zap: {condition: service_healthy}
+      nuclei: {condition: service_healthy}
+      wfuzz: {condition: service_healthy}
+      wuppiefuzz: {condition: service_healthy}
+      oast: {condition: service_healthy}
+      engine-data-init: {condition: service_completed_successfully}
+    networks: [data, scanner]
+    restart: unless-stopped
+    security_opt: ["no-new-privileges:true"]
+    read_only: true
+    tmpfs: [/tmp]
+
+  zap:
+    image: ghcr.io/zaproxy/zaproxy:2.17.0
+    command:
+      - zap.sh
+      - -daemon
+      - -host
+      - 0.0.0.0
+      - -port
+      - "8080"
+      - -config
+      - api.key=${ZAP_API_KEY:-local-zap-key}
+      - -config
+      - api.addrs.addr.name=.*
+      - -config
+      - api.addrs.addr.regex=true
+      - -config
+      - autoupdate.checkOnStart=false
+      - -config
+      - autoupdate.downloadNewRelease=false
+      - -config
+      - autoupdate.installAddonUpdates=false
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8080/JSON/core/view/version/?apikey=${ZAP_API_KEY:-local-zap-key}"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+    networks: [scanner]
+    restart: unless-stopped
+    security_opt: ["no-new-privileges:true"]
+    read_only: true
+    tmpfs:
+      - /tmp
+      - /home/zap/.ZAP:uid=1000,gid=1000,mode=0700
+      - /home/zap/.mozilla:uid=1000,gid=1000,mode=0700
+      - /home/zap/.java:uid=1000,gid=1000,mode=0700
+    volumes:
+      - engine-data:/engine-data:ro
+    mem_limit: 2g
+    cpus: 2
+
+  engine-data-init:
+    image: alpine:3.22.1
+    command: ["sh", "-c", "chown 10001:10001 /engine-data && chmod 0755 /engine-data"]
+    volumes:
+      - engine-data:/engine-data
+    networks: [scanner]
+    restart: "no"
+    security_opt: ["no-new-privileges:true"]
+
+  nuclei:
+    build:
+      context: .
+      dockerfile: docker/nuclei-runner.Dockerfile
+    environment: *runner-environment
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8091/health', timeout=2)"]
+      interval: 10s
+      timeout: 3s
+      retries: 10
+    networks: [scanner]
+    restart: unless-stopped
+    security_opt: ["no-new-privileges:true"]
+    read_only: true
+    tmpfs: [/tmp]
+    mem_limit: 2g
+    cpus: 2
+
+  wfuzz:
+    build:
+      context: .
+      dockerfile: docker/wfuzz-runner.Dockerfile
+    environment: *runner-environment
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8092/health', timeout=2)"]
+      interval: 10s
+      timeout: 3s
+      retries: 10
+    networks: [scanner]
+    restart: unless-stopped
+    security_opt: ["no-new-privileges:true"]
+    read_only: true
+    tmpfs: [/tmp]
+    mem_limit: 1g
+    cpus: 1
+
+  wuppiefuzz:
+    build:
+      context: .
+      dockerfile: docker/wuppiefuzz-runner.Dockerfile
+    environment: *runner-environment
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8093/health', timeout=2)"]
+      interval: 10s
+      timeout: 3s
+      retries: 10
+    networks: [scanner]
+    restart: unless-stopped
+    security_opt: ["no-new-privileges:true"]
+    read_only: true
+    tmpfs: [/tmp]
+    mem_limit: 2g
+    cpus: 2
+
+  oast:
+    build:
+      context: .
+      dockerfile: docker/app.Dockerfile
+    command: ["uvicorn", "app.oast:app", "--host", "0.0.0.0", "--port", "8094"]
+    environment:
+      REDIS_URL: redis://redis:6379/0
+      OAST_API_KEY: ${OAST_API_KEY:-local-oast-key}
+    depends_on:
+      redis: {condition: service_healthy}
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8094/health', timeout=2)"]
+      interval: 10s
+      timeout: 3s
+      retries: 10
+    networks: [data, scanner]
+    restart: unless-stopped
+    security_opt: ["no-new-privileges:true"]
+    read_only: true
+    tmpfs: [/tmp]
+    mem_limit: 256m
+    cpus: 0.5
+
+  vulnerable-api:
+    build:
+      context: .
+      dockerfile: docker/vulnerable-api.Dockerfile
+    profiles: ["test-target"]
+    ports:
+      - "8001:8001"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8001/health', timeout=2)"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    networks: [scanner]
+    security_opt: ["no-new-privileges:true"]
+    read_only: true
+    tmpfs: [/tmp]
+
+networks:
+  frontend: {}
+  data:
+    internal: true
+  scanner: {}
+
+volumes:
+  postgres-data: {}
+  redis-data: {}
+  reports: {}
+  engine-data: {}

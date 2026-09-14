@@ -1,0 +1,16 @@
+{
+  "project_name": "Local scanner verification",
+  "external_project_id": "example-project-001",
+  "target_url": "http://vulnerable-api:8001",
+  "authorized": true,
+  "profile": "STANDARD",
+  "specification_url": "http://vulnerable-api:8001/openapi.json",
+  "authentication": {"type": "BEARER", "token": "user-a-token"},
+  "identities": [
+    {"name": "User A", "role": "user", "resource_ids": ["100"], "auth": {"type": "BEARER", "token": "user-a-token"}},
+    {"name": "User B", "role": "user", "resource_ids": ["200"], "auth": {"type": "BEARER", "token": "user-b-token"}},
+    {"name": "Administrator", "role": "admin", "is_admin": true, "auth": {"type": "BEARER", "token": "admin-token"}}
+  ],
+  "policy": {"rate_limit": 5, "concurrency": 3, "max_requests": 500, "max_duration": 600}
+}
+

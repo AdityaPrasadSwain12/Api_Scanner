@@ -1,0 +1,125 @@
+openapi: 3.1.0
+info:
+  title: Deliberately Vulnerable API
+  version: 1.0.0
+servers:
+  - url: http://vulnerable-api:8001
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+paths:
+  /public:
+    get:
+      operationId: getPublic
+      responses:
+        "200": {description: Public response}
+  /private:
+    get:
+      operationId: getPrivate
+      security: [{bearerAuth: []}]
+      responses:
+        "200": {description: Private response}
+  /users/{user_id}:
+    get:
+      operationId: getUser
+      security: [{bearerAuth: []}]
+      parameters:
+        - name: user_id
+          in: path
+          required: true
+          schema: {type: string}
+      responses:
+        "200": {description: User profile}
+  /admin/stats:
+    get:
+      operationId: adminStats
+      tags: [admin]
+      security: [{bearerAuth: []}]
+      responses:
+        "200": {description: Admin statistics}
+  /search:
+    get:
+      operationId: search
+      parameters:
+        - name: q
+          in: query
+          schema: {type: string}
+      responses:
+        "200": {description: Search result}
+  /api/vulnerable/users/search:
+    get:
+      operationId: vulnerableUserSearch
+      parameters:
+        - name: q
+          in: query
+          schema: {type: string, example: alice}
+      responses:
+        "200": {description: Deliberately injectable search result}
+  /api/vulnerable/files:
+    get:
+      operationId: vulnerableFileRead
+      parameters:
+        - name: name
+          in: query
+          schema: {type: string, example: welcome.txt}
+      responses:
+        "200": {description: Deliberately unsafe file response}
+  /api/vulnerable/message:
+    get:
+      operationId: vulnerableMessage
+      parameters:
+        - name: name
+          in: query
+          schema: {type: string, example: visitor}
+      responses:
+        "200": {description: Deliberately unsafe HTML response}
+  /api/vulnerable/redirect:
+    get:
+      operationId: vulnerableRedirect
+      parameters:
+        - name: to
+          in: query
+          schema: {type: string, example: /}
+      responses:
+        "302": {description: Deliberately unsafe redirect}
+  /api/vulnerable/command:
+    get:
+      operationId: vulnerableCommand
+      parameters:
+        - name: host
+          in: query
+          schema: {type: string, example: localhost}
+      responses:
+        "200": {description: Deliberately unsafe command wrapper}
+  /api/vulnerable/nosql:
+    get:
+      operationId: vulnerableNoSql
+      parameters:
+        - name: username
+          in: query
+          schema: {type: string, example: alice}
+      responses:
+        "200": {description: Deliberately unsafe NoSQL filter}
+  /api/vulnerable/fetch:
+    get:
+      operationId: vulnerableServerFetch
+      parameters:
+        - name: url
+          in: query
+          schema: {type: string, format: uri, example: "https://example.invalid"}
+      responses:
+        "200": {description: Deliberately unsafe server-side URL fetch}
+  /bulk:
+    post:
+      operationId: bulkCreate
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: array
+              items: {type: object}
+      responses:
+        "200": {description: Accepted records}

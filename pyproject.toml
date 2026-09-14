@@ -1,0 +1,60 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "enterprise-api-scanner"
+version = "0.1.0"
+description = "A scope-safe, modular API security assessment service"
+readme = "README.md"
+requires-python = ">=3.11,<3.15"
+license = {text = "Apache-2.0"}
+dependencies = [
+  "alembic==1.16.5",
+  "celery[redis]==5.5.3",
+  "cryptography==46.0.1",
+  "fastapi==0.116.1",
+  "httpx==0.28.1",
+  "jinja2==3.1.6",
+  "orjson==3.11.3",
+  "prometheus-client==0.22.1",
+  "psycopg[binary]==3.2.10",
+  "pydantic-settings==2.10.1",
+  "python-multipart==0.0.20",
+  "pyyaml==6.0.3",
+  "reportlab==4.4.3",
+  "sqlalchemy==2.0.43",
+  "structlog==25.4.0",
+  "uvicorn[standard]==0.35.0",
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest==8.4.2",
+  "pytest-asyncio==1.1.0",
+  "pytest-cov==6.2.1",
+  "ruff==0.12.12",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["app", "vulnerable_test_api", "engine_runner"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q --strict-markers"
+markers = [
+  "integration: requires Docker services",
+  "e2e: end-to-end scan against the local vulnerable API",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP", "S"]
+ignore = ["S101", "E501", "B008"]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["S105", "S607"]
+"scripts/e2e.py" = ["S310"]

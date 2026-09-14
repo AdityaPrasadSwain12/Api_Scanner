@@ -1,0 +1,10 @@
+api
+v1
+health
+status
+docs
+openapi.json
+swagger.json
+robots.txt
+admin
+

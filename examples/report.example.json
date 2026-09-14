@@ -1,0 +1,82 @@
+{
+  "schema_version": "2.0",
+  "report_type": "pentest_handoff",
+  "generated_at": "2026-09-13T00:00:00Z",
+  "scan": {
+    "scan_id": "example-scan",
+    "target": "https://api.example.com",
+    "status": "COMPLETED",
+    "profile": "STANDARD",
+    "started_at": "2026-09-12T23:59:17.900000Z",
+    "finished_at": "2026-09-13T00:00:00Z",
+    "duration_seconds": 42.1
+  },
+  "summary": {
+    "unique_issue_count": 1,
+    "affected_location_count": 1,
+    "severity_distribution": {
+      "CRITICAL": 0,
+      "HIGH": 0,
+      "MEDIUM": 1,
+      "LOW": 0,
+      "INFO": 0
+    },
+    "maximum_risk_score": 5.5,
+    "endpoint_coverage": {
+      "total": 3,
+      "tested": 2,
+      "skipped": 1,
+      "not_tested": 0,
+      "percent_tested": 66.7
+    }
+  },
+  "issues": [
+    {
+      "issue_id": "PT-001",
+      "title": "Operation accessible without declared authentication",
+      "severity": "MEDIUM",
+      "confidence": "HIGH",
+      "risk_score": 5.5,
+      "classification": {
+        "category": "missing-authentication",
+        "owasp_api": "API2:2023 Broken Authentication",
+        "cwe": "CWE-306"
+      },
+      "description": "The protected operation returned the same data without credentials.",
+      "impact": "Unauthenticated callers may retrieve restricted data.",
+      "affected_locations": [
+        {
+          "method": "GET",
+          "path": "/private",
+          "evidence": [
+            {
+              "request": {
+                "method": "GET",
+                "url": "https://api.example.com/private"
+              },
+              "response": {
+                "status_code": 200,
+                "body": "Restricted account data returned."
+              },
+              "proof": "The response was equivalent with and without authentication."
+            }
+          ]
+        }
+      ],
+      "remediation": "Enforce authentication and authorization server-side for this operation.",
+      "references": [
+        "https://owasp.org/API-Security/"
+      ],
+      "status": "OPEN",
+      "detected_by": [
+        "custom",
+        "zap"
+      ]
+    }
+  ],
+  "limitations": [
+    "Automated testing does not guarantee complete vulnerability detection.",
+    "An untested endpoint is not evidence that the endpoint is not vulnerable.",
+    "Full scanner evidence and engine metadata are available in the technical JSON report."
+  ]
+}

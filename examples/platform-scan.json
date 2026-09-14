@@ -1,0 +1,20 @@
+{
+  "project_name": "Customer payments API",
+  "external_project_id": "platform-project-123",
+  "authorization_reference": "engagement-or-ownership-record-456",
+  "target_url": "https://api.customer.example",
+  "authorized": true,
+  "profile": "STANDARD",
+  "specification_url": "https://api.customer.example/openapi.json",
+  "authentication": {
+    "type": "BEARER",
+    "token": "replace-with-a-short-lived-test-token"
+  },
+  "policy": {
+    "rate_limit": 5,
+    "concurrency": 3,
+    "max_requests": 1000,
+    "max_duration": 900,
+    "allowed_hosts": []
+  }
+}

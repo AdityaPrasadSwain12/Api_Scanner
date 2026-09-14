@@ -1,0 +1,65 @@
+<!doctype html><html><head><meta charset='utf-8'><title>Technical API Security Report</title>
+<style>body{font:14px system-ui;margin:40px;color:#17202a}header{border-bottom:4px solid #0f766e}
+table{border-collapse:collapse;width:100%}th,td{padding:9px;border:1px solid #dfe6e9;text-align:left}
+th{background:#e2e8f0}code,pre{font-size:12px}pre{white-space:pre-wrap;overflow-wrap:anywhere;background:#f8fafc;padding:12px}
+section{page-break-inside:avoid;border-top:1px solid #ddd}.note{background:#fff3bf;padding:12px}</style></head>
+<body><header><p>SENTINEL API SECURITY</p><h1>Technical Assessment Report</h1>
+<p>https://api.example.com</p></header><p class='note'>Automated testing does not guarantee complete vulnerability detection.</p>
+<h2>Executive summary</h2><p>3 endpoints; 1 findings; maximum risk 5.5.</p>
+<h2>Coverage</h2><pre>{
+  &quot;endpoints&quot;: {
+    &quot;total&quot;: 3,
+    &quot;defined&quot;: 3,
+    &quot;discovered&quot;: 0,
+    &quot;tested&quot;: 2,
+    &quot;skipped&quot;: 1,
+    &quot;not_tested&quot;: 0,
+    &quot;percent_tested&quot;: 66.7,
+    &quot;skip_reasons&quot;: {
+      &quot;missing example&quot;: 1
+    }
+  },
+  &quot;authentication&quot;: {
+    &quot;required_endpoints&quot;: 1,
+    &quot;tested&quot;: true
+  },
+  &quot;authorization&quot;: {
+    &quot;identities_configured&quot;: 0,
+    &quot;tested&quot;: false
+  },
+  &quot;fuzzing&quot;: {
+    &quot;tested&quot;: true
+  },
+  &quot;engines&quot;: {
+    &quot;custom&quot;: {
+      &quot;status&quot;: &quot;COMPLETED&quot;,
+      &quot;request_count&quot;: 3,
+      &quot;reason&quot;: null
+    },
+    &quot;zap&quot;: {
+      &quot;status&quot;: &quot;COMPLETED&quot;,
+      &quot;request_count&quot;: 12,
+      &quot;reason&quot;: null
+    }
+  },
+  &quot;specification&quot;: {
+    &quot;available&quot;: true,
+    &quot;operations_analyzed&quot;: 3
+  },
+  &quot;interpretation&quot;: &quot;An untested endpoint is not evidence that the endpoint is not vulnerable.&quot;
+}</pre>
+<h2>Findings overview</h2><table><thead><tr><th>Severity</th><th>Confidence</th><th>Finding</th><th>Endpoint</th><th>Risk</th></tr></thead><tbody><tr><td>MEDIUM</td><td>HIGH</td><td>Operation accessible without declared authentication</td><td><code>GET /private</code></td><td>5.5</td></tr></tbody></table>
+<h2>Detailed findings</h2><section><h2>1. Operation accessible without declared authentication</h2><p><b>MEDIUM / HIGH</b> &middot; Risk 5.5</p><p><code>GET /private</code></p><p>The protected operation returned the same data without credentials.</p><h3>Impact</h3><p>Unauthenticated callers may retrieve restricted data.</p><h3>Evidence</h3><pre>[
+  {
+    &quot;engine&quot;: &quot;custom&quot;,
+    &quot;request&quot;: {
+      &quot;method&quot;: &quot;GET&quot;,
+      &quot;url&quot;: &quot;https://api.example.com/private&quot;
+    },
+    &quot;response&quot;: {
+      &quot;status_code&quot;: 200,
+      &quot;body&quot;: &quot;Restricted account data returned.&quot;
+    },
+    &quot;detail&quot;: &quot;The response was equivalent with and without authentication.&quot;
+  }
+]</pre><h3>Remediation</h3><p>Enforce authentication and authorization server-side for this operation.</p></section></body></html>

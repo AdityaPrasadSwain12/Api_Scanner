@@ -1,0 +1,15 @@
+{
+  "target_url": "https://api.example.com",
+  "authorized": true,
+  "profile": "SAFE",
+  "policy": {
+    "rate_limit": 2,
+    "concurrency": 2,
+    "request_timeout": 8,
+    "max_requests": 250,
+    "max_duration": 300,
+    "allowed_hosts": ["api.example.com"],
+    "user_paths": ["/api/health"]
+  }
+}
+
